@@ -1,0 +1,15 @@
+#!/bin/bash
+# DO hook — blocks dangerous Bash commands before they execute
+
+INPUT=$(cat)
+CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
+
+if echo "$CMD" | grep -qE "terraform destroy|terraform apply.*-auto-approve|aws s3 rm|aws s3 rb"; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: "Destructive command detected. Use /tf-destroy or /tf-apply commands for safety."
+    }
+  }'
+fi
